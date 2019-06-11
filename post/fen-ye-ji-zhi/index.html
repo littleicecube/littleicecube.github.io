@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://littleicecube.github.io/favicon.ico?v=1560223241812">
+<link rel="shortcut icon" href="https://littleicecube.github.io/favicon.ico?v=1560223493632">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://littleicecube.github.io/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://littleicecube.github.io">
-        <img src="https://littleicecube.github.io/images/avatar.png?v=1560223241812" class="site-logo">
+        <img src="https://littleicecube.github.io/images/avatar.png?v=1560223493632" class="site-logo">
         <h1 class="site-title">小冰块</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -122,8 +122,13 @@
 么共需要1K * 4B =4KB的物理内存来存储，这4KB内存中存储的地址称为<strong>页目录</strong>，其中每一项称为<strong>页目录项</strong>，大小是4B</li>
 <li>划分完成后，4GB的地址空间共有4M个页表项和1K个页目录项来表示，共需要4MB(页表占用的内存空间)+4KB(页目录占用的内存空间) = 4.4MB空间，每个进程都有
 自己独立的页目录和页表
-<img src="https://seeds.ink/images/yeBiao.jpg" alt="页表"></li>
+<img src="https://seeds.ink/images/yeBiao.jpg" alt="页目录和页表"></li>
 </ol>
+<ul>
+<li>假设存在一个线性地址：<strong>0x00402001</strong>  二 进 制 形 式 ：<strong>0000000001,0000000010,000000000001</strong></li>
+<li>其转换关系如下</li>
+<li><img src="https://seeds.ink/images/yeBiaoShiLi.jpg" alt="线性地址转换"></li>
+</ul>
 
             </div>
             
