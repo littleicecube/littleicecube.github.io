@@ -751,3 +751,25 @@ a {
   font-size: 16px;
   margin: 4px 8px;
 }
+
+      .sidebar {
+        width: 250px;
+      }
+      .main-container {
+        margin-left: 250px;
+      }
+    
+	  .content-container{
+		   max-width: 1300px;
+	  }
+	  .post-detail {
+        max-width: 1300px;
+      }
+    
+        .main{
+	max-width = 1900px;
+  }
+  .post-detail {
+	max-width = 1900px;
+  }
+    
