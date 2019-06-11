@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://littleicecube.github.io</id>
+    <id>https://seeds.ink</id>
     <title>小冰块</title>
-    <updated>2019-06-11T03:30:37.485Z</updated>
+    <updated>2019-06-11T04:14:08.370Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
-    <link rel="alternate" href="https://littleicecube.github.io"/>
-    <link rel="self" href="https://littleicecube.github.io/atom.xml"/>
+    <link rel="alternate" href="https://seeds.ink"/>
+    <link rel="self" href="https://seeds.ink/atom.xml"/>
     <subtitle>简单明了</subtitle>
-    <logo>https://littleicecube.github.io/images/avatar.png</logo>
-    <icon>https://littleicecube.github.io/favicon.ico</icon>
+    <logo>https://seeds.ink/images/avatar.png</logo>
+    <icon>https://seeds.ink/favicon.ico</icon>
     <rights>All rights reserved 2019, 小冰块</rights>
     <entry>
         <title type="html"><![CDATA[abc]]></title>
-        <id>https://littleicecube.github.io/post/fen-ye-ji-zhi</id>
-        <link href="https://littleicecube.github.io/post/fen-ye-ji-zhi">
+        <id>https://seeds.ink/post/fen_ye_ji_zhi</id>
+        <link href="https://seeds.ink/post/fen_ye_ji_zhi">
         </link>
         <updated>2019-06-10T12:02:37.000Z</updated>
     </entry>
     <entry>
         <title type="html"><![CDATA[Hello Gridea]]></title>
-        <id>https://littleicecube.github.io/post/hello-gridea</id>
-        <link href="https://littleicecube.github.io/post/hello-gridea">
+        <id>https://seeds.ink/post/hello-gridea</id>
+        <link href="https://seeds.ink/post/hello-gridea">
         </link>
         <updated>2018-12-11T16:00:00.000Z</updated>
         <summary type="html"><![CDATA[<p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
