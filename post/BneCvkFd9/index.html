@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560409879983">
+<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560410842420">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://seeds.ink/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://seeds.ink">
-        <img src="https://seeds.ink/images/avatar.png?v=1560409879983" class="site-logo">
+        <img src="https://seeds.ink/images/avatar.png?v=1560410842420" class="site-logo">
         <h1 class="site-title">小冰块</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -107,6 +107,10 @@
 <li>内核将除自己使用之外的物理内存以4KB作为一页进行了划分，然后创建一个数组结构，数组的下标表示第几页内存，数组的值表示这页内存有没有被使用，这是linux 0.11
 种最早的物理内存管理方式，现代操作系统内核以复杂的树状结构来管理并配之以复杂的分配和回收算法，但是总的来说都是完成的剩余物理内存的使用和释放操作。
 <img src="https://seeds.ink/images/kernalMMC.jpg" alt="内核，分页，物理内存"></li>
+<li>在32位模式下，我们在编写c语言程序时能获取到一个变量的内存地址并打印出来，这个地址是程序在编译完成后的逻辑意义上的地址。每个编译完成后的地址空间大小为4GB，这4GB并不是真实可用的物理内存地址空间。那么现在重新加载App1,App2,App3将会是怎么样一种情况呢？</li>
+<li>我们知道编译完成后的App通常会有代码段，数据段，堆栈段的划分，当App1在执行数据段的某行代码时，获取这行代码的逻辑地址，很显然
+1 后去App1的进程控制块指针，获取当前要执行的代码地址
+2 根据地址</li>
 </ul>
 
             </div>
