@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560412708027">
+<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560412889357">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://seeds.ink/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://seeds.ink">
-        <img src="https://seeds.ink/images/avatar.png?v=1560412708027" class="site-logo">
+        <img src="https://seeds.ink/images/avatar.png?v=1560412889357" class="site-logo">
         <h1 class="site-title">小冰块</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -110,9 +110,9 @@
 <li>我们知道编译完成后的App通常会有代码段，数据段，堆栈段的划分。当内核切换到App1运行时，会从App1的PCB中指定的入口地址开始执行代码，此时的地址是逻辑地址，cpu不能直接根据这个地址从物理内存上获取数据，那么就需要转换。</li>
 </ul>
 <ol>
-<li>在linux中是同一个<strong>页表</strong>进行转换的，每个进程都有自己一套独立的页表映射关系，是逻辑地址到物理地址的桥梁</li>
+<li>在linux中是通过<strong>页表</strong>进行转换的，每个进程都有自己一套独立的页表映射关系，是逻辑地址到物理地址的桥梁</li>
 <li>App1的PCB中保存了页表在物理内存上的入口地址，通过入口地址获取页表信息，根据逻辑地址在页表中查询对应的物理地址</li>
-<li>如果没有对应的物理地址，则从内核管理的物理内存中申请一页内存，内核会遍历自己管理物理内存的数据，如果发现一页未使用的物理内存，则返回这个未使用物理内存的地址，返回的物理地址则被记录在页表中，供下次执行代码时查找</li>
+<li>如果没有对应的物理地址，则从内核管理的物理内存中申请一页内存，内核会遍历自己管理物理内存的数据，如果发现一页未使用的物理内存，则返回这一页未使用的物理内存地址，返回后的物理地址则被记录在页表中跟当前进程绑定，供下次代码执行时查找</li>
 <li>在获取到真实的物理地址后cpu根据这个地址进行寻址，获取地址中的数据进行操作。</li>
 </ol>
 
