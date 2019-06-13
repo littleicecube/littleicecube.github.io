@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560412483834">
+<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560412708027">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://seeds.ink/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://seeds.ink">
-        <img src="https://seeds.ink/images/avatar.png?v=1560412483834" class="site-logo">
+        <img src="https://seeds.ink/images/avatar.png?v=1560412708027" class="site-logo">
         <h1 class="site-title">小冰块</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -107,8 +107,14 @@
 种最早的物理内存管理方式，现代操作系统内核以复杂的树状结构来管理并配之以复杂的分配和回收算法，但是总的来说都是完成的剩余物理内存的使用和释放操作。
 <img src="https://seeds.ink/images/kernalMMC.jpg" alt="内核，分页，物理内存"></li>
 <li>在32位模式下，我们在编写c语言程序时能获取到一个变量的内存地址并打印出来，这个地址是程序在编译完成后的逻辑意义上的地址。每个编译完成后的地址空间大小为4GB，这4GB并不是真实可用的物理内存地址空间。那么现在重新加载App1,App2,App3将会是怎么样一种情况呢？</li>
-<li>我们知道编译完成后的App通常会有代码段，数据段，堆栈段的划分。当内核切换到App1运行时，会从App1的PCB中指定的入口地址开始执行代码，此时的地址是逻辑地址，cpu不能直接根据这个地址从物理内存上获取数据，那么就需要转换。在linux中是同一个<strong>页表</strong>进行转换的，每个进程都有自己一套独立的页表映射关系，是逻辑地址到物理地址的桥梁。App1的PCB中保存了页表在物理内存上的入口地址，通过页表根据逻辑地址在页表中查询对应的物理地址，如果没有对应的物理地址，则从内核管理的物理内存中申请一页内存，内核会遍历自己管理物理内存的数据，如果发现一页未使用的物理内存，则返回这个未使用物理内存的地址，返回的物理地址则被记录在页表中，供下次执行代码时查找。在获取到真实的物理地址后cpu根据这个地址进行寻址，获取地址中的数据进行操作。</li>
+<li>我们知道编译完成后的App通常会有代码段，数据段，堆栈段的划分。当内核切换到App1运行时，会从App1的PCB中指定的入口地址开始执行代码，此时的地址是逻辑地址，cpu不能直接根据这个地址从物理内存上获取数据，那么就需要转换。</li>
 </ul>
+<ol>
+<li>在linux中是同一个<strong>页表</strong>进行转换的，每个进程都有自己一套独立的页表映射关系，是逻辑地址到物理地址的桥梁</li>
+<li>App1的PCB中保存了页表在物理内存上的入口地址，通过入口地址获取页表信息，根据逻辑地址在页表中查询对应的物理地址</li>
+<li>如果没有对应的物理地址，则从内核管理的物理内存中申请一页内存，内核会遍历自己管理物理内存的数据，如果发现一页未使用的物理内存，则返回这个未使用物理内存的地址，返回的物理地址则被记录在页表中，供下次执行代码时查找</li>
+<li>在获取到真实的物理地址后cpu根据这个地址进行寻址，获取地址中的数据进行操作。</li>
+</ol>
 
             </div>
             
