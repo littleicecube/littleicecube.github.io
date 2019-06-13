@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560404981786">
+<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560405625219">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://seeds.ink/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://seeds.ink">
-        <img src="https://seeds.ink/images/avatar.png?v=1560404981786" class="site-logo">
+        <img src="https://seeds.ink/images/avatar.png?v=1560405625219" class="site-logo">
         <h1 class="site-title">小冰块</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -98,8 +98,13 @@
             <div class="post-content">
               <ul>
 <li>简单聊内核和内存的关系</li>
-<li>软盘的第一个扇区存放的是一段引导程序的代码，当计算机加电启动后，物理硬件会将第一个扇区的代码读取到物理内存的指定位置，然后cpu开始执行引导程序的代码，引导程序会将软盘后边扇区中的内核代码读取到物理内存的指定地方，引导扇区的代码运行完后不在做他用会被后续的内核代码覆盖，假设内核代码被加载到从物理地址0开始的一段内存中，cpu跳转到内核代码处开始执行，
+<li>软盘的第一个扇区存放的是一段引导程序的代码，当计算机加电启动后，物理硬件会将第一个扇区的代码读取到物理内存的指定位置，然后cpu开始执行引导程序的代码，引导程序会将软盘后边扇区中的内核代码读取到物理内存的指定地方，引导扇区的代码运行完后不在做他用会被后续的内核代码覆盖，假设内核代码被加载到从物理地址0开始的一段内存中，cpu跳转到内核代码处开始执行
 <img src="https://seeds.ink/images/kernalMMA.jpg" alt="内核和物理内存"></li>
+<li>假设现在除内核程序外还有三个APP程序需要运行分别为App1，App2，App3,每个进程需要用一个数据结构来描述称为<strong>进程控制块PCB</strong>，当三个程序分别被运行加载后
+内核数据空间中存在一个数组结构用来存放PCB的信息。
+<img src="https://seeds.ink/images/kernalMMB.jpg" alt="内核，进程，物理内存"></li>
+<li>内核空间，三个App进程空间将物理内存分配完，那么当运行App4时将没有可用的物理内存，那么现实中的内核是怎么并行的运行成百上千个进程呢。</li>
+<li></li>
 </ul>
 
             </div>
