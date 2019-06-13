@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560408497316">
+<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560409879983">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://seeds.ink/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://seeds.ink">
-        <img src="https://seeds.ink/images/avatar.png?v=1560408497316" class="site-logo">
+        <img src="https://seeds.ink/images/avatar.png?v=1560409879983" class="site-logo">
         <h1 class="site-title">小冰块</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -103,8 +103,10 @@
 <li>假设现在除内核程序外还有三个APP程序需要运行分别为App1，App2，App3,每个进程需要用一个数据结构来描述称为<strong>进程控制块PCB</strong>，当三个程序分别被运行加载后
 内核数据空间中存在一个数组结构用来存放PCB的信息。
 <img src="https://seeds.ink/images/kernalMMB.jpg" alt="内核，进程，物理内存"></li>
-<li>内核空间，三个App进程空间将物理内存分配完，那么当运行App4时将没有可用的物理内存，那么现实中的内核是怎么并行的运行成百上千个进程呢。</li>
-<li></li>
+<li>内核空间，三个App进程空间将物理内存分配完，那么当运行App4时将没有可用的物理内存，那么现实中的内核是怎么并行的运行成百上千个进程呢？</li>
+<li>内核将除自己使用之外的物理内存以4KB作为一页进行了划分，然后创建一个数组结构，数组的下标表示第几页内存，数组的值表示这页内存有没有被使用，这是linux 0.11
+种最早的物理内存管理方式，现代操作系统内核以复杂的树状结构来管理并配之以复杂的分配和回收算法，但是总的来说都是完成的剩余物理内存的使用和释放操作。
+<img src="https://seeds.ink/images/kernalMMC.jpg" alt="内核，分页，物理内存"></li>
 </ul>
 
             </div>
