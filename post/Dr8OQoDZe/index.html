@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560510899255">
+<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560652664035">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://seeds.ink/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://seeds.ink">
-        <img src="https://seeds.ink/images/avatar.png?v=1560510899255" class="site-logo">
+        <img src="https://seeds.ink/images/avatar.png?v=1560652664035" class="site-logo">
         <h1 class="site-title">小冰块</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -101,7 +101,8 @@
 <li>创建一个锁的实例lock，其中包含当前锁的状态，当前占用锁的线程和等待锁的其他线程</li>
 <li><img src="https://seeds.ink/images/lockA.jpg" alt="锁资源"></li>
 <li>线程T1尝试获取锁时，lock内部实现通过<strong>CAS</strong>尝试修改锁中state资源cas(state,0,1)，此时lock还未被占用，修改成功后表示当前线程拥有了锁资源，并将当前线程的句柄赋值到lock中，通过比较当重复获取锁时发现当前线程已经拥有了锁，可以继续向下执行</li>
-<li>线程T2通过<strong>CAS</strong>尝试修改锁中资源时修改失败，当前lock资源已被T1占用，T2线程执行lock中的代码实现，线程T2自己封装到一个节点中，并将节点添加到lock的等待链表中，添加T2节点时，发现head指向节点为空，则先添加一个头部节点然后在将T2节点添加在头部节点之后，之后调用操作系统的调度实现，T1线程将自己挂起，让出cpu的执行资源。</li>
+<li>线程T2通过<strong>CAS</strong>尝试修改锁中资源时修改失败，当前lock资源已被T1占用，T2线程执行lock中的代码将自己封装到一个节点中，并将节点添加到lock的双向等待链表中，添加T2节点时，发现head指向节点为空，则先添加一个头部节点，然后在将T2节点添加在头部节点之后。之后调用操作系统的调度实现，T1线程将自己挂起，让出cpu的执行资源。</li>
+<li>线程T3通过<strong>CAS</strong>尝试修改锁中资源时修改失败，T3线程执行lock中的代码将自己封装到一个节点中，并将节点添加到双线等待链表中，挂起自己，让出cpu资源。</li>
 </ul>
 
             </div>
