@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>ReentrantLock | 小冰块</title>
+<meta name="description" content="简单明了">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560772631033">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://seeds.ink/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://seeds.ink">
+        <img src="https://seeds.ink/images/avatar.png?v=1560772631033" class="site-logo">
+        <h1 class="site-title">小冰块</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      简单明了
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://seeds.ink/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">ReentrantLock</h2>
+            <div class="post-date">2019-06-17</div>
+            
+            <div class="post-content">
+              <ul>
+<li>ReentrantLock是可重入锁，主要实现依赖于同步器AbstractQueuedSynchronizer，同步器中的主要数据数据结构如下
+<img src="https://seeds.ink/images/lockE.jpg" alt="同步结构"></li>
+<li>简单考虑锁的实现分为两部分：1）线程数据结构的实例，用来表示线程的状态。2）对线程的操作，用来挂起和唤醒线程</li>
+</ul>
+<pre><code>public final void acquire(int arg) {
+	//当前线程尝试获取锁
+	//如果获取成功则设置锁被占用，并设置当前线程的引用到线程活跃区
+	//如果获取失败，则将当前线程封装成一个Node添加到链表中
+	if (!tryAcquire(arg) &amp;&amp;
+		acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
+		selfInterrupt();
+}
+</code></pre>
+<ul>
+<li>1成功获取锁的线程，会将当前线程的数据设置到活跃区域</li>
+</ul>
+<pre><code>protected final boolean tryAcquire(int acquires) {
+	final Thread current = Thread.currentThread();
+	int c = getState();
+	if (c == 0) { //表示当前lock还未被其他线程占用
+		if (!hasQueuedPredecessors() &amp;&amp;
+			//cas设置state的值
+			compareAndSetState(0, acquires)) {
+			//设置lock的线程为当前活跃线程
+			setExclusiveOwnerThread(current);
+			return true;
+		}
+	}else if (current == getExclusiveOwnerThread()) {
+		int nextc = c + acquires;
+		if (nextc &lt; 0)
+			throw new Error(&quot;Maximum lock count exceeded&quot;);
+		//已经获取锁的线程，重新获取锁时将State值加1
+		setState(nextc);
+		return true;
+	}
+	return false;
+}
+
+private Node addWaiter(Node mode) {
+	//将当前线程封装到节点中
+	Node node = new Node(Thread.currentThread(), mode);
+	// 如果尾部节点不为空，表示不是第一个节点则直接将节点添加到链表中
+	Node pred = tail;
+	if (pred != null) {
+		node.prev = pred;
+		if (compareAndSetTail(pred, node)) {
+			pred.next = node;
+			return node;
+		}
+	}
+	//尾部节点为null时调用此方法
+	enq(node);
+	return node;
+}
+
+
+private Node enq(final Node node) {
+	//存在并发操作，所以需要死循环保证新的节点一定被添加到链表中
+	for (;;) {
+		Node t = tail;
+		//如果tail，head指向的节点为空，则先添加一个thread为null,waitStatus为0的点作为头部节点
+		//这里为什么要先添加一个节点呢？因为线程在释放锁并唤醒下一个挂起的线程时会判断head指向的node节点中的waitStatus值
+		//如果waitStatus为-1（SIGNAL）表示链表中存在线程需要唤醒，但是此时添加的node中的waitStatus是默认值0，后续的代码会更新为-1
+		if (t == null) { 
+			if (compareAndSetHead(new Node()))
+				tail = head;
+		} else {
+		//将当前节点添加到链表最后
+			node.prev = t;
+			if (compareAndSetTail(t, node)) {
+				t.next = node;
+				return t;
+			}
+		}
+	}
+}
+
+//判断是否需要将上一步封装node节点中的线程挂起，
+//node节点代表当前线程，即当前线程判断是否将自己挂起，让出cpu的时间片
+final boolean acquireQueued(final Node node, int arg) {
+	boolean failed = true;
+	try {
+		boolean interrupted = false;
+		for (;;) {
+			//获取当前节点的前一个节点
+			final Node p = node.predecessor();
+			//如果前一个节点是头部节点，如果头部节点释放了锁资源，当前线程tryAcquire争锁资源可能成功
+			if (p == head &amp;&amp; tryAcquire(arg)) {
+				setHead(node);
+				p.next = null; // help GC
+				failed = false;
+				return interrupted;
+			}
+			//判断当前线程是否需要挂起，如果需要挂起则调用系统资源将自身挂起，释放cpu资源
+			if (shouldParkAfterFailedAcquire(p, node) &amp;&amp;
+				parkAndCheckInterrupt())
+				interrupted = true;
+		}
+	} finally {
+		if (failed)
+			cancelAcquire(node);
+	}
+}
+
+
+private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
+	int ws = pred.waitStatus;
+	if (ws == Node.SIGNAL)
+		/*
+		 * This node has already set status asking a release
+		 * to signal it, so it can safely park.
+		 */
+		return true;
+	if (ws &gt; 0) {
+		/*
+		 * Predecessor was cancelled. Skip over predecessors and
+		 * indicate retry.
+		 */
+		do {
+			node.prev = pred = pred.prev;
+		} while (pred.waitStatus &gt; 0);
+		pred.next = node;
+	} else {
+		/*
+		 * waitStatus must be 0 or PROPAGATE.  Indicate that we
+		 * need a signal, but don't park yet.  Caller will need to
+		 * retry to make sure it cannot acquire before parking.
+		 */
+		compareAndSetWaitStatus(pred, ws, Node.SIGNAL);
+	}
+	return false;
+}
+</code></pre>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://seeds.ink/post/Dr8OQoDZe">
+                  <h3 class="post-title">
+                    lock
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>
