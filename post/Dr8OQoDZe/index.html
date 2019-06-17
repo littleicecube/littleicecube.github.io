@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560758086256">
+<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560758333390">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://seeds.ink/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://seeds.ink">
-        <img src="https://seeds.ink/images/avatar.png?v=1560758086256" class="site-logo">
+        <img src="https://seeds.ink/images/avatar.png?v=1560758333390" class="site-logo">
         <h1 class="site-title">小冰块</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -97,17 +97,16 @@
             
             <div class="post-content">
               <ul>
-<li>假设要实现一种锁机制</li>
-<li><img src="https://seeds.ink/images/lockA.jpg" alt="锁资源"></li>
-<li>创建一个锁的实例lock，其中包含当前锁的状态，当前占用锁的线程和等待锁的其他线程</li>
-<li><img src="https://seeds.ink/images/lockB.jpg" alt="线程T1"></li>
-<li>线程T1尝试获取锁时，lock内部实现通过<strong>CAS</strong>尝试修改锁中state资源cas(state,0,1)，此时lock还未被其他线程占用，修改成功后表示当前线程拥有了锁资源，并将线程T1的句柄赋值到lock中，继续向下执行。当重复获取锁时通过比较锁中的线程句柄值，发现T1已经占有锁，则将state加1后继续执行当前线程。</li>
-<li><img src="https://seeds.ink/images/lockC.jpg" alt="线程T2"></li>
-<li>线程T2尝试获取锁时，通过<strong>CAS</strong>修改锁中state值失败，当前lock资源已被T1占用，T2线程执行lock中的代码将自己封装到一个Node节点中，并将节点添加到lock的双向等待链表中，添加T2节点时，发现head指向节点为空，则先添加一个头部节点，此时T1线程尚未被添加到队列且并未将自己挂起。</li>
-<li><img src="https://seeds.ink/images/lockD.jpg" alt="线程T3"></li>
-<li>T2线程在将自身封装成一个Node节点添加到链表，并将头部节点的waitStatus设置为-1（表示后面存在节点需要唤醒）后才能调用操作系统API将自己挂起，让出cpu的执行资源。</li>
-<li><img src="https://seeds.ink/images/lockE.jpg" alt="线程T3"></li>
-<li>线程T3尝试获取锁时，通过<strong>CAS</strong>修改锁中state值失败，T3线程执行lock中的代码将自己封装到一个Node节点中，并将节点添加到双线等待链表中,设置前一个可用节点的waitStatus为-1，T3调用操作系统调度实现挂起自己，让出cpu资源。</li>
+<li>假设要实现一种锁机制,定义了一种数据结构，创建一个锁的实例lock，其中包含当前锁的状态，当前占用锁的线程和等待锁的其他线程
+<img src="https://seeds.ink/images/lockA.jpg" alt="锁资源"></li>
+<li>线程T1尝试获取锁时，lock内部实现通过<strong>CAS</strong>尝试修改锁中state资源cas(state,0,1)，此时lock还未被其他线程占用，修改成功后表示当前线程拥有了锁资源，并将线程T1的句柄赋值到lock中，继续向下执行。当重复获取锁时通过比较锁中的线程句柄值，发现T1已经占有锁，则将state加1后继续执行当前线程。
+<img src="https://seeds.ink/images/lockB.jpg" alt="线程T1"></li>
+<li>线程T2尝试获取锁时，通过<strong>CAS</strong>修改锁中state值失败，当前lock资源已被T1占用，T2线程执行lock中的代码将自己封装到一个Node节点中，并将节点添加到lock的双向等待链表中，添加T2节点时，发现head指向节点为空，则先添加一个头部节点，此时T1线程尚未被添加到队列且并未将自己挂起。
+<img src="https://seeds.ink/images/lockC.jpg" alt="线程T2"></li>
+<li>T2线程在将自身封装成一个Node节点添加到链表，并将头部节点的waitStatus设置为-1（表示后面存在节点需要唤醒）后才能调用操作系统API将自己挂起，让出cpu的执行资源。
+<img src="https://seeds.ink/images/lockD.jpg" alt="线程T21"></li>
+<li>线程T3尝试获取锁时，通过<strong>CAS</strong>修改锁中state值失败，T3线程执行lock中的代码将自己封装到一个Node节点中，并将节点添加到双线等待链表中,设置前一个可用节点的waitStatus为-1，T3调用操作系统调度实现挂起自己，让出cpu资源。
+<img src="https://seeds.ink/images/lockE.jpg" alt="线程T3"></li>
 </ul>
 
             </div>
