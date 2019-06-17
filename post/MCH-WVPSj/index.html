@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560772631033">
+<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560775802543">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://seeds.ink/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://seeds.ink">
-        <img src="https://seeds.ink/images/avatar.png?v=1560772631033" class="site-logo">
+        <img src="https://seeds.ink/images/avatar.png?v=1560775802543" class="site-logo">
         <h1 class="site-title">小冰块</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -184,6 +184,7 @@ final boolean acquireQueued(final Node node, int arg) {
 			//获取当前节点的前一个节点
 			final Node p = node.predecessor();
 			//如果前一个节点是头部节点，如果头部节点释放了锁资源，当前线程tryAcquire争锁资源可能成功
+			//配合shouldParkAfterFailedAcquire中的waitstatus状态的设置，防止线程锁死
 			if (p == head &amp;&amp; tryAcquire(arg)) {
 				setHead(node);
 				p.next = null; // help GC
@@ -204,27 +205,25 @@ final boolean acquireQueued(final Node node, int arg) {
 
 private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
 	int ws = pred.waitStatus;
+	//如果当前线程节点的前一个节点的waitStatus为-1，表明拥有锁的线程在释放锁资源时会唤醒一个后续节点
+	//假设拥有锁的线程为T1,当前线程为T2
+	//T2执行到此处，T1刚好释放完锁资源，通过head指向节点的waitStatus判断出T2节点需要唤醒，则T1就会调用LockSupport.unpark(T2)释放T2
+	//虽然T2当前处于活跃状态，这是一种临界场景
 	if (ws == Node.SIGNAL)
-		/*
-		 * This node has already set status asking a release
-		 * to signal it, so it can safely park.
-		 */
 		return true;
 	if (ws &gt; 0) {
-		/*
-		 * Predecessor was cancelled. Skip over predecessors and
-		 * indicate retry.
-		 */
+		//如果waitStatus大于0（CANCELLED）表明是取消的节点，则将其从链表中移除
 		do {
 			node.prev = pred = pred.prev;
 		} while (pred.waitStatus &gt; 0);
 		pred.next = node;
 	} else {
-		/*
-		 * waitStatus must be 0 or PROPAGATE.  Indicate that we
-		 * need a signal, but don't park yet.  Caller will need to
-		 * retry to make sure it cannot acquire before parking.
-		 */
+		//如果waitStatus为-2（CONDITION），-3（PROPAGATE），或0（初始状态，即上一步中的默认状态），则将其修改为-1，表明存在后续节点需要唤醒。
+		//假设拥有锁的线程为T1,当前线程为T2
+		//1）T1刚好释放完锁资源，此时T2执行此处代码，将前一个节点waitStatus设置为-1，T1又执行判断出链表中存在要唤醒的线程节点，T2会唤醒T1这个活跃的线程
+		//2）T1刚好释放完锁资源，且判断出链表中没有需要唤醒的线程，此时T2执行此处代码，将前一个节点waitStatus设置为-1，如果在此处挂起线程，那么链表中的线程
+		//节点将成为死节点。所以此处代码做了返回，上层代码会再次尝试获取锁
+		//总的来说，在设置完状态后一定要在尝试是否能获取锁，避免临界状态带来的锁死
 		compareAndSetWaitStatus(pred, ws, Node.SIGNAL);
 	}
 	return false;
