@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560775802543">
+<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560776067936">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://seeds.ink/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://seeds.ink">
-        <img src="https://seeds.ink/images/avatar.png?v=1560775802543" class="site-logo">
+        <img src="https://seeds.ink/images/avatar.png?v=1560776067936" class="site-logo">
         <h1 class="site-title">小冰块</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -221,8 +221,8 @@ private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
 		//如果waitStatus为-2（CONDITION），-3（PROPAGATE），或0（初始状态，即上一步中的默认状态），则将其修改为-1，表明存在后续节点需要唤醒。
 		//假设拥有锁的线程为T1,当前线程为T2
 		//1）T1刚好释放完锁资源，此时T2执行此处代码，将前一个节点waitStatus设置为-1，T1又执行判断出链表中存在要唤醒的线程节点，T2会唤醒T1这个活跃的线程
-		//2）T1刚好释放完锁资源，且判断出链表中没有需要唤醒的线程，此时T2执行此处代码，将前一个节点waitStatus设置为-1，如果在此处挂起线程，那么链表中的线程
-		//节点将成为死节点。所以此处代码做了返回，上层代码会再次尝试获取锁
+		//2）T1刚好释放完锁资源，且判断出链表中没有需要唤醒的线程，此时T2执行此处代码，将前一个节点waitStatus设置为-1，如果后续代码不进行锁资源检查，那么
+		//链表中的线程节点将成为死节点。所以此处代码做了返回，上层代码会再次尝试获取锁时，由于锁资源已经被释放，所以锁会被一个活跃线程重新占有
 		//总的来说，在设置完状态后一定要在尝试是否能获取锁，避免临界状态带来的锁死
 		compareAndSetWaitStatus(pred, ws, Node.SIGNAL);
 	}
