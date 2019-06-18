@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" >
 
-<title>ReentrantLock | 小冰块</title>
+<title>AbstractQueuedSynchronizer | 小冰块</title>
 <meta name="description" content="简单明了">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560776067936">
+<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1560840218844">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://seeds.ink/styles/main.css">
 
@@ -30,7 +30,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://seeds.ink">
-        <img src="https://seeds.ink/images/avatar.png?v=1560776067936" class="site-logo">
+        <img src="https://seeds.ink/images/avatar.png?v=1560840218844" class="site-logo">
         <h1 class="site-title">小冰块</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -92,7 +92,7 @@
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
           <div class="post-detail">
-            <h2 class="post-title">ReentrantLock</h2>
+            <h2 class="post-title">AbstractQueuedSynchronizer</h2>
             <div class="post-date">2019-06-17</div>
             
             <div class="post-content">
@@ -109,11 +109,9 @@
 		acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
 		selfInterrupt();
 }
-</code></pre>
-<ul>
-<li>1成功获取锁的线程，会将当前线程的数据设置到活跃区域</li>
-</ul>
-<pre><code>protected final boolean tryAcquire(int acquires) {
+- 1成功获取锁的线程，会将当前线程的数据设置到活跃区域
+
+protected final boolean tryAcquire(int acquires) {
 	final Thread current = Thread.currentThread();
 	int c = getState();
 	if (c == 0) { //表示当前lock还未被其他线程占用
@@ -207,7 +205,7 @@ private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
 	int ws = pred.waitStatus;
 	//如果当前线程节点的前一个节点的waitStatus为-1，表明拥有锁的线程在释放锁资源时会唤醒一个后续节点
 	//假设拥有锁的线程为T1,当前线程为T2
-	//T2执行到此处，T1刚好释放完锁资源，通过head指向节点的waitStatus判断出T2节点需要唤醒，则T1就会调用LockSupport.unpark(T2)释放T2
+	//T2执行到此处，此刻T1刚好释放完锁资源，通过head指向节点的waitStatus判断出T2节点需要唤醒，则T1就会调用LockSupport.unpark(T2)释放T2
 	//虽然T2当前处于活跃状态，这是一种临界场景
 	if (ws == Node.SIGNAL)
 		return true;
@@ -220,14 +218,69 @@ private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
 	} else {
 		//如果waitStatus为-2（CONDITION），-3（PROPAGATE），或0（初始状态，即上一步中的默认状态），则将其修改为-1，表明存在后续节点需要唤醒。
 		//假设拥有锁的线程为T1,当前线程为T2
-		//1）T1刚好释放完锁资源，此时T2执行此处代码，将前一个节点waitStatus设置为-1，T1又执行判断出链表中存在要唤醒的线程节点，T2会唤醒T1这个活跃的线程
-		//2）T1刚好释放完锁资源，且判断出链表中没有需要唤醒的线程，此时T2执行此处代码，将前一个节点waitStatus设置为-1，如果后续代码不进行锁资源检查，那么
+		//1）T1刚好释放完锁资源，此刻T2执行此处代码，将前一个节点waitStatus设置为-1，T1又执行判断出链表中存在要唤醒的线程节点，T2会唤醒T1这个活跃的线程
+		//2）T1刚好释放完锁资源，且判断出链表中没有需要唤醒的线程，此刻T2执行此处代码，将前一个节点waitStatus设置为-1，如果后续代码不进行锁资源检查，那么
 		//链表中的线程节点将成为死节点。所以此处代码做了返回，上层代码会再次尝试获取锁时，由于锁资源已经被释放，所以锁会被一个活跃线程重新占有
 		//总的来说，在设置完状态后一定要在尝试是否能获取锁，避免临界状态带来的锁死
 		compareAndSetWaitStatus(pred, ws, Node.SIGNAL);
 	}
 	return false;
 }
+</code></pre>
+<ul>
+<li>锁释放</li>
+</ul>
+<pre><code>public final boolean release(int arg) {
+	//当前活跃线程释放锁资源
+	if (tryRelease(arg)) {
+		Node h = head;
+		//如果存在需要唤醒的线程节点，则进行唤醒操作
+		if (h != null &amp;&amp; h.waitStatus != 0)
+			//唤醒线程
+			unparkSuccessor(h);
+		return true;
+	}
+	return false;
+}
+
+//释放锁资源，减少当前锁重新获取锁的次数值，直到为0，表示当前线程完全释放锁
+protected final boolean tryRelease(int releases) {
+	int c = getState() - releases;
+	if (Thread.currentThread() != getExclusiveOwnerThread())
+		throw new IllegalMonitorStateException();
+	boolean free = false;
+	//表示完全释放锁资源，设置锁指向的线程为null
+	if (c == 0) {
+		free = true;
+		setExclusiveOwnerThread(null);
+	}
+	setState(c);
+	return free;
+}
+
+
+private void unparkSuccessor(Node node) {
+	int ws = node.waitStatus;
+	if (ws &lt; 0)
+		compareAndSetWaitStatus(node, ws, 0);
+
+	Node s = node.next;
+	//如果头节点紧接的后继节点不是需要被唤醒的节点则从尾部节点开始遍历
+	//寻找一个需要被唤醒的节点
+	if (s == null || s.waitStatus &gt; 0) {
+		s = null;
+		for (Node t = tail; t != null &amp;&amp; t != node; t = t.prev){
+			if (t.waitStatus &lt;= 0){
+				s = t;
+			}
+		}
+	}
+	//唤醒节点中的线程
+	if (s != null){
+		LockSupport.unpark(s.thread);
+	}
+}
+
 </code></pre>
 
             </div>
