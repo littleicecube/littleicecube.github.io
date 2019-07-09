@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Dubbo分析：服务暴露 | 小冰块</title>
+<meta name="description" content="简单明了">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1562666642467">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://seeds.ink/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://seeds.ink">
+        <img src="https://seeds.ink/images/avatar.png?v=1562666642467" class="site-logo">
+        <h1 class="site-title">小冰块</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      简单明了
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://seeds.ink/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Dubbo分析：服务暴露</h2>
+            <div class="post-date">2019-07-09</div>
+            
+            <div class="post-content">
+              <p>package com.dafy.ana;</p>
+<p>import org.apache.dubbo.common.URL;
+import org.apache.dubbo.common.extension.ExtensionLoader;
+import org.apache.dubbo.config.ApplicationConfig;
+import org.apache.dubbo.config.ReferenceConfig;
+import org.apache.dubbo.config.RegistryConfig;
+import org.apache.dubbo.rpc.Exporter;
+import org.apache.dubbo.rpc.Invoker;
+import org.apache.dubbo.rpc.Protocol;
+import org.apache.dubbo.rpc.ProxyFactory;
+import org.apache.dubbo.rpc.cluster.Constants;</p>
+<p>public class DubboExtension {</p>
+<pre><code>/**
+ * 1）在那台机上暴露什么方法。例如：在当地址：localhost，端口：8899，上暴露方法：UserService.getUserNameByID()
+ * 2）暴露的服务使用哪种代理方法。如：JdkProxy，JavassistProxy
+ * 3）使用什么序列化协议。例如使用dubbo或thrift序列化
+ * 4）通信框架是什么。例如netty,mina
+ * 5）将暴露的方法要注册到哪个地方去，以便消费端获取访问地址。如zookeeper，redis
+ */
+public static void main(String[] args) {
+	//定义要暴露的方法使用的dubbo作为序列化协议，以及方法所在的服务器地址和端口号
+	URL methodUrl = new URL(&quot;dubbo&quot;,&quot;127.0.0.1&quot;,8899,IUserService.class.getName())
+			.addParameter(&quot;interface&quot;, IUserService.class.getName())//暴露的服务
+			.addParameter(&quot;methods&quot;, &quot;getUserNameByID&quot;)//暴露的方法
+			.addParameter(&quot;side&quot;, &quot;provider&quot;)
+			.addParameter(&quot;scope&quot;, &quot;remote&quot;)
+			.addParameter(&quot;register&quot;, true)
+			.addParameter(&quot;timeout&quot;, 1000)
+			.addParameter(&quot;retries&quot;, 2);
+
+	//定义注册中心的地址和端口号
+	URL registryURL = new URL(&quot;registry&quot;,&quot;127.0.0.1&quot;,2181).addParameter(&quot;registry&quot;, &quot;zookeeper&quot;);
+	//将注册中心的url和暴露方法定义的url进行合并，在程序启动时先根据方法定义的url将服务启动，在根据注册中心的url将暴露的方法注册到注册中心
+	URL url = registryURL.addParameterAndEncoded(Constants.EXPORT_KEY, methodUrl.toFullString());
+	//配置文件的路径 new File(&quot;dubbo-2.4.8/META-INF/dubbo/internal/&quot;)
+	//从配置中加载暴露服务时可以使用的代理实现，如：JdkProxy，JavassistProxy他们都间接实现了ProxyFactory
+	ProxyFactory  proxyFactory = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
+	//真正提供服务的实例
+	UserService userServiceIns = new UserService();
+	//利用代理工具将要暴露的服务和接口封装成一个Invoker
+    Invoker&lt;?&gt; invoker = proxyFactory.getInvoker(userServiceIns,IUserService.class,url);
+	//从配置中加载可以使用的序列化协议，如：DubboProtocol，JsonRpcProtocol他们都间接实现了接口Protocol
+	Protocol protocol = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
+	//将暴露的服务和通信框架进行关系绑定，并启动通信服务在相应的端口上进行监听
+    //将暴露的服务注册到注册中心
+    Exporter&lt;?&gt; exporter = protocol.export(invoker);
+    System.out.println(&quot;^^^^^^^^^^服务端启动成功^^^^^^^^^^&quot;);
+    
+    //客户端发起调用
+    ReferenceConfig&lt;IUserService&gt; reference = new ReferenceConfig&lt;IUserService&gt;(); 
+    reference.setApplication(new ApplicationConfig(&quot;client&quot;));
+    reference.setRegistry(new RegistryConfig(&quot;127.0.0.1:2181&quot;,&quot;zookeeper&quot;)); 
+    reference.setInterface(IUserService.class);
+    String ret = reference.get().getUserNameByID(1234);
+    System.out.println(&quot;调用结果：&quot;+ret);
+}
+</code></pre>
+<p>}</p>
+<pre><code>interface IUserService {
+	public String getUserNameByID(long lUserId);
+}
+class UserService implements IUserService{
+	public String getUserNameByID(long lUserId) {
+		return &quot;userName&quot;+lUserId;
+	}
+}
+</code></pre>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://seeds.ink/post/mnV6KKxVg">
+                  <h3 class="post-title">
+                    Dubbo分析：ExtensionLoader
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Dubbo分析：ExtensionLoader | 小冰块</title>
+<meta name="description" content="简单明了">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://seeds.ink/favicon.ico?v=1562666642467">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://seeds.ink/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://seeds.ink">
+        <img src="https://seeds.ink/images/avatar.png?v=1562666642467" class="site-logo">
+        <h1 class="site-title">小冰块</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      简单明了
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://seeds.ink/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Dubbo分析：ExtensionLoader</h2>
+            <div class="post-date">2019-07-09</div>
+            
+            <div class="post-content">
+              <p>ExtensionLoader是某一种类型配置的容器，程序在启动过程中会将指定类型的配置加载到ExtensionLoader的实例中。
+例如当获取有哪些序列化协议的实现时会将File(META-INF/dubbo/internal/org.apache.dubbo.rpc.Protocol)路径下配置的内容加载到对应的ExtensionLoader实例中
+META-INF/dubbo/internal/org.apache.dubbo.rpc.Protocol)中的内容摘录如下:</p>
+<pre><code>	qos=org.apache.dubbo.qos.protocol.QosProtocolWrapper
+	filter=org.apache.dubbo.rpc.protocol.ProtocolFilterWrapper
+	listener=org.apache.dubbo.rpc.protocol.ProtocolListenerWrapper
+	dubbo=org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol
+	thrift=org.apache.dubbo.rpc.protocol.thrift.ThriftProtocol
+	registry=org.apache.dubbo.registry.integration.RegistryProtocol
+</code></pre>
+<p>加载的代码如下：</p>
+<pre><code>	1）加载指定类型的配置信息
+	ExtensionLoader loader = ExtensionLoader.getExtensionLoader(Protocol.class);
+	//获取dubbo序列化协议的实现，此处是直接指定了要用dubbo作为序列化协议
+	DubboProtocol dubboProtocolIns = loader.getExtension(&quot;dubbo&quot;);
+	
+	//通过loader.getExtension(&quot;dubbo&quot;)获取的并不是原始的协议实例，还会对协议实例进行包装加强
+	//内部先创建协议的实例dubboProtocolIns
+	DubboProtocol dubboProtocolIns = new DubboProtocol();
+	//将dubboProtocolIns包装成一个filterWrapper,ProtocolFilterWrapper中会将配置路径下的filter
+	//信息加载到ProtocolFilterWrapper中并实例化
+	ProtocolFilterWrapper filterWrapper = ProtocolFilterWrapper(dubboProtocolIns);
+	//将filterWrapper再次包装成一个listenerWrapper，ProtocolListenerWrapper中将配置路径下的listener
+	//信息加载到ProtocolListenerWrapper中并实例化
+	ProtocolListenerWrapper listenerWrapper = ProtocolListenerWrapper(filterWrapper);
+	//将listenerWrapper再次包装成QosProtocolWrapper实例
+	QosProtocolWrapper qosWrapper = new QosProtocolWrapper(listenerWrapper);
+	```
+	根据配置信息对生成协议实例包装,最终loader.getExtension(&quot;dubbo&quot;)获取的是被包装过后的qosWrapper。需要注意的是
+	并不是所有的ExtensionLoader代表的类型都需要包装，路径下没有配置包装类信息的类型不需要包装
+	
+	2）上一步中获取类型的包装实例后就可以使用其中的功能。如：
+	```
+	DubboProtocol dubboProtocolIns = loader.getExtension(&quot;dubbo&quot;);
+	//将要暴露的服务通过协议暴露出去
+	dubboProtocolIns.export(new Invoker(&quot;dubbo://userService.getUserNameById&quot;));
+	```
+	3）假如要暴露的服务是dubbo://userService.getUserNameById还可以通过获取协议的Adaptive来处理
+	```
+	ExtensionLoader loader = ExtensionLoader.getExtensionLoader(Protocol.class);
+	Protocol protocol = loader.getAdaptiveExtension();
+	protocol.export(new invoker(&quot;dubbo&quot;));
+	```
+	//上面的代码并不是直接获取一个具体序列化协议的实现，而是多个协议的代理类，这个代理类可以配置在对应类型的
+	//路径下，类型初始化的时候会被加载，如果没有配置，dubbo中会利用字节码技术动态生成一个。Protocol类型的信息在
+	//初始化的时候就会动态生成一个Adaptive类如：
+	```
+	 public static class Protocol$Adpative implements  Protocol {
+		public void destroy() {
+			throw new UnsupportedOperationException(&quot;method public &quot;);
+		}
+		public int getDefaultPort() {
+			throw new UnsupportedOperationException(&quot;method public &quot;);
+		}
+		public  Invoker refer( Class arg0, org.apache.dubbo.common.URL arg1) {
+			org.apache.dubbo.common.URL url = arg1;
+			String extName = url.getProtocol() == null ? &quot;dubbo&quot; : url.getProtocol();
+			//也是先通过类型获取对应配置的集合，在根据协议的名称获取具体协议的实现
+			Protocol extension = ( Protocol) ExtensionLoader.getExtensionLoader( Protocol.class).getExtension(extName);
+			return extension.refer(arg0, arg1);
+		}
+		public  Exporter export( Invoker arg0) {
+			org.apache.dubbo.common.URL url = arg0.getUrl();
+			String extName = url.getProtocol() == null ? &quot;dubbo&quot; : url.getProtocol() ;
+			//也是先通过类型获取对应配置的集合，在根据协议的名称获取具体协议的实现
+			Protocol extension = ( Protocol) ExtensionLoader.getExtensionLoader(Protocol.class).getExtension(extName);
+			return extension.export(arg0);
+		}
+	}
+</code></pre>
+<p>在描述了ExtensionLoader的基本作用后下面是其成员变量：</p>
+<pre><code>class ExtensionLoader{
+	//表示当前ExtensionLoader实例描述的是org.apache.dubbo.rpc.Protocol类型的信息
+	private final Class&lt;?&gt; type = org.apache.dubbo.rpc.Protocol;
+	//如果配置文件中存在的class上配置有注解则保存在
+	private volatile Class&lt;?&gt; cachedAdaptiveClass = null;
+	//如果配置文件中存在的class上配置有注解实例化后则保存在
+	private final Holder&lt;Object&gt; cachedAdaptiveInstance = new Holder&lt;Object&gt;();
+	private final ExtensionFactory objectFactory;
+	//要加载类型可能有几种实现方式，程序启动后解析配置保存在当前实例中，根据实现class获取对应的名称
+	//	cachedNames:{
+	//		org.apache.dubbo.rpc.protocol.thrift.ThriftProtocol:&quot;thrift&quot;，
+	//		org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol:&quot;dubbo&quot;
+	//	}
+	private final ConcurrentMap&lt;Class&lt;?&gt;， String&gt; cachedNames = new ConcurrentHashMap&lt;Class&lt;?&gt;， String&gt;();
+	//要加载类型可能有几种实现方式，程序启动后解析配置然后保存在当前实例中，可以根据名称获取对应的实现类
+	//	Holder:{
+	//		&quot;thrift&quot;:org.apache.dubbo.rpc.protocol.thrift.ThriftProtocol，
+	//		&quot;dubbo&quot;:org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol
+	// 	}
+	private final Holder&lt;Map&lt;String， Class&lt;?&gt;&gt;&gt; cachedClasses = new Holder&lt;Map&lt;String，Class&lt;?&gt;&gt;&gt;();
+	private final Map&lt;String， Activate&gt; cachedActivates = new ConcurrentHashMap&lt;String， Activate&gt;();
+	//要加载类型实现类，实例化后存放的地方
+	//	cachedInstances:{
+	//		&quot;thrift&quot;:new org.apache.dubbo.rpc.protocol.thrift.ThriftProtocol()，
+	//		&quot;dubbo&quot;:new org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol()
+	//	}
+	private final ConcurrentMap&lt;String， Holder&lt;Object&gt;&gt; cachedInstances = new ConcurrentHashMap&lt;String， Holder&lt;Object&gt;&gt;();
+	private String cachedDefaultName;
+	//要加载类型的实现类，可能需要被装饰一下，cachedWrapperClasses中存放了包装的盒子
+	//	cachedWrapperClasses:[
+	//		org.apache.dubbo.rpc.protocol.ProtocolFilterWrapper，
+	//		org.apache.dubbo.rpc.protocol.ProtocolListenerWrapper，
+	 * 		org.apache.dubbo.qos.protocol.QosProtocolWrapper
+	//	]
+	private Set&lt;Class&lt;?&gt;&gt; cachedWrapperClasses;
+	private final ExtensionFactory objectFactory;
+	private final Map&lt;String， Activate&gt; cachedActivates = new ConcurrentHashMap&lt;String， Activate&gt;();
+	private String cachedDefaultName;
+}
+</code></pre>
+<p>加载类型配置信息的过程</p>
+<pre><code>ExtensionLoader loader = ExtensionLoader.getExtensionLoader(Protocol.class);
+public T getExtension(String name) {
+	Object 	instance = createExtension(name);
+	return (T) instance;
+}
+</code></pre>
+<p>对要根据名称获取的实例进行增强
+1)比如获取dubbo对应的实例全限定名为org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol
+2)实例化DubboProtocol
+3)遍历DubboProtocol中的方法，如果方法是set开头的则调用设置一些配置进去
+4)获取DubboProtocol对应的包装类信息，比如对应配置的包装类信息为QosProtocolWrapper，ProtocolFilterWrapper，ProtocolListenerWrapper
+则实例化QosProtocolWrapper，ProtocolFilterWrapper，ProtocolListenerWrapper然后将DubboProtocol的实例作为参数对其进行包装
+5)返回最终的实例</p>
+<pre><code>private T createExtension(String name) {
+	//根据名称获取DubboProtocol并创建实例
+	Class&lt;?&gt; clazz = getExtensionClasses().get(name);
+	T instance = clazz.newInstance();
+	//先调用注入方法，同过instance中的set方法为其注入参数
+	injectExtension(instance);
+	//遍历所有的包装方法
+	Set&lt;Class&lt;?&gt;&gt; wrapperClasses = cachedWrapperClasses;
+	if (wrapperClasses != null &amp;&amp; wrapperClasses.size() &gt; 0) {
+		for (Class&lt;?&gt; wrapperClass : wrapperClasses) {
+			//根据配置的包装类，将instance进行嵌套包装
+			instance = injectExtension((T) wrapperClass.getConstructor(type).newInstance(instance));
+		}
+	}
+	return instance;
+}
+
+private Map&lt;String, Class&lt;?&gt;&gt; getExtensionClasses() {
+    Map&lt;String, Class&lt;?&gt;&gt; classes = cachedClasses.get();
+    if (classes == null) {
+        synchronized (cachedClasses) {
+            classes = cachedClasses.get();
+            if (classes == null) {
+            	//加载路径下配置的类信息
+                classes = loadExtensionClasses();
+                cachedClasses.set(classes);
+            }
+        }
+    }
+    return classes;
+}
+
+private Map&lt;String, Class&lt;?&gt;&gt; loadExtensionClasses() {
+    cacheDefaultExtensionName();
+    Map&lt;String, Class&lt;?&gt;&gt; extensionClasses = new HashMap&lt;&gt;();
+    //加载META-INF/dubbo/internal路径下的信息
+    loadDirectory(extensionClasses, DUBBO_INTERNAL_DIRECTORY, type.getName().replace(&quot;org.apache&quot;, &quot;com.alibaba&quot;));
+    //加载META-INF/dubbo/dubbo路径下的信息
+    loadDirectory(extensionClasses, DUBBO_DIRECTORY, type.getName().replace(&quot;org.apache&quot;, &quot;com.alibaba&quot;));
+    //加载META-INF/dubbo/services路径下的信息
+    loadDirectory(extensionClasses, SERVICES_DIRECTORY, type.getName().replace(&quot;org.apache&quot;, &quot;com.alibaba&quot;));
+    return extensionClasses;
+}
+
+
+private void loadDirectory(Map&lt;String, Class&lt;?&gt;&gt; extensionClasses, String dir, String type) {
+    String fileName = dir + type;
+    Enumeration&lt;java.net.URL&gt; urls = ClassLoader.getSystemResources(fileName);
+    if (urls != null) {
+        while (urls.hasMoreElements()) {
+            java.net.URL resourceURL = urls.nextElement();
+            //加载包路径下的信息
+            loadResource(extensionClasses, classLoader, resourceURL);
+        }
+    }
+}
+
+private void loadResource(Map&lt;String, Class&lt;?&gt;&gt; extensionClasses, ClassLoader classLoader, java.net.URL resourceURL) {
+    BufferedReader reader = new BufferedReader(new InputStreamReader(resourceURL.openStream(), StandardCharsets.UTF_8))；
+    String line;
+    //读取每一行信息，解析后用加载用Class描述
+    while ((line = reader.readLine()) != null) {
+        final int ci = line.indexOf('#');
+        if (ci &gt;= 0) {
+            line = line.substring(0, ci);
+        }
+        line = line.trim();
+        if (line.length() &gt; 0) {
+            String name = null;
+            int i = line.indexOf('=');
+            if (i &gt; 0) {
+                name = line.substring(0, i).trim();
+                line = line.substring(i + 1).trim();
+            }
+            if (line.length() &gt; 0) {
+            	//创建配置类信息的Class描述，并根据类上的注解类型存在到ExtensionLoader实例的对应的变量中
+            	//如line = &quot;org.apache.dubbo.rpc.protocol.ProtocolFilterWrapper&quot;;
+                loadClass(extensionClasses, resourceURL, Class.forName(line, true, classLoader), name);
+            }
+        }
+    }
+}
+
+private void loadClass(Map&lt;String, Class&lt;?&gt;&gt; extensionClasses, java.net.URL resourceURL, Class&lt;?&gt; clazz, String name) throws NoSuchMethodException {
+	//如果类上存在Adaptive注解则存放到ExtensionLoader实例的对应的变量中
+    if (clazz.isAnnotationPresent(Adaptive.class)) {
+        cacheAdaptiveClass(clazz);
+    } else if (isWrapperClass(clazz)) {
+    //如果类是包装类型的则存放到ExtensionLoader实例的对应的变量中
+        cacheWrapperClass(clazz);
+    } else {
+        clazz.getConstructor();
+        if (StringUtils.isEmpty(name)) {
+            name = findAnnotationName(clazz);
+            if (name.length() == 0) {
+                throw new IllegalStateException(&quot;No such extension name for the class &quot; + clazz.getName() + &quot; in the config &quot; + resourceURL);
+            }
+        }
+
+        String[] names = NAME_SEPARATOR.split(name);
+        if (ArrayUtils.isNotEmpty(names)) {
+        	//如果类上存在Activate注解则存放到ExtensionLoader实例的对应的变量中
+            cacheActivateClass(clazz, names[0]);
+            for (String n : names) {
+            	//缓存配置的类信息
+                cacheName(clazz, n);
+                saveInExtensionClass(extensionClasses, clazz, name);
+            }
+        }
+    }
+}
+
+
+
+
+//获取对应的Adaptive类
+private T createAdaptiveExtension() {
+    try {
+        return injectExtension((T) getAdaptiveExtensionClass().newInstance());
+    } catch (Exception e) {
+        throw new IllegalStateException(&quot;Can't create adaptive extension &quot; + type + &quot;, cause: &quot; + e.getMessage(), e);
+    }
+}
+创建类型对应的Adaptive类
+private Class&lt;?&gt; getAdaptiveExtensionClass() {
+    getExtensionClasses();
+    if (cachedAdaptiveClass != null) {
+        return cachedAdaptiveClass;
+    }
+    return cachedAdaptiveClass = createAdaptiveExtensionClass();
+}
+private Class&lt;?&gt; createAdaptiveExtensionClass() {
+	//调用Adaptive类生成器，根据规则生成对应的class信息
+    String code = new AdaptiveClassCodeGenerator(type, cachedDefaultName).generate();
+    ClassLoader classLoader = findClassLoader();
+    //加载可以用的编译工具，如JdkCompiler，JavassistCompiler将上一步生成的code编译成字节码
+    org.apache.dubbo.common.compiler.Compiler compiler = ExtensionLoader.getExtensionLoader(org.apache.dubbo.common.compiler.Compiler.class).getAdaptiveExtension();
+    return compiler.compile(code, classLoader);
+}
+</code></pre>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://seeds.ink/post/MCH-WVPSj">
+                  <h3 class="post-title">
+                    AbstractQueuedSynchronizer
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>
